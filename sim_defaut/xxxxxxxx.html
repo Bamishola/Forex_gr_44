@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dégradé horizontal</title>
+  <style>
+    canvas {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gradientCanvas"></canvas>
+
+  <script>
+    // Création du canvas
+    var canvas = document.getElementById('gradientCanvas');
+    var ctx = canvas.getContext('2d');
+
+    // Dimensions du canvas
+    var width = canvas.width = 400;
+    var height = canvas.height = 100;
+
+    // Début et fin du dégradé
+    var gradient = ctx.createLinearGradient(0, 0, width, 0);
+
+    // Couleurs du dégradé
+    var color1 = 'rgb(255, 0, 0)'; // couleur 1
+    var color2 = 'rgb(0, 0, 255)'; // couleur 2
+
+    // Ajout des couleurs au dégradé
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+
+    // Remplissage du rectangle avec le dégradé
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Obtention des valeurs RGB des couleurs
+    var color1Values = color1.match(/\d+/g);
+    var color2Values = color2.match(/\d+/g);
+
+    // Conversion des valeurs en nombres
+    var color1Integers = color1Values.map(Number);
+    var color2Integers = color2Values.map(Number);
+
+    // Multiplier la couleur 2 par 2 pour obtenir la couleur 1
+    var newColor1Integers = color2Integers.map(value => value * 2);
+
+    // Création de la nouvelle couleur 1
+    var newColor1 = 'rgb(' + newColor1Integers.join(', ') + ')';
+
+    // Affichage de la nouvelle couleur 1
+    console.log('La nouvelle couleur 1 est:', newColor1);
+  </script>
+</body>
+</html>

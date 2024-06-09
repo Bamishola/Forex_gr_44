@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Simulation des défauts de parallélisme dans un interféromètre de Michelson</title>
+    <style>
+    body, html {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #000;
+}
+
+.simulation-container {
+    position: relative;
+    width: 80%;
+    height: 80%;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #fff;
+}
+
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <canvas id="interferometerCanvas"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('interferometerCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = canvas.clientWidth;
+canvas.height = canvas.clientHeight;
+
+const width = canvas.width;
+const height = canvas.height;
+const wavelength = 550; // en nm (vert)
+const glassThickness = 500; // en nm
+const defectAmplitude = 50; // Amplitude du défaut en nm
+
+// Fonction pour convertir des degrés en radians
+function degToRad(degrees) {
+    return degrees * (Math.PI / 180);
+}
+
+// Fonction pour calculer l'intensité des franges d'interférence
+function calculateIntensity(x, y) {
+    const angle = degToRad(0.1 * x); // Défaut de parallélisme variant avec x
+    const pathDifference = 2 * glassThickness * Math.cos(angle) + defectAmplitude * Math.sin(0.05 * x) * Math.sin(0.05 * y);
+    const phaseDifference = (2 * Math.PI * pathDifference) / wavelength;
+    return 0.5 * (1 + Math.cos(phaseDifference));
+}
+
+// Dessiner les franges d'interférence
+function drawInterferencePattern() {
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const intensity = calculateIntensity(x, y);
+            const color = Math.floor(intensity * 255);
+
+            const index = (y * width + x) * 4;
+            data[index] = color;      // Rouge
+            data[index + 1] = color;  // Vert
+            data[index + 2] = color;  // Bleu
+            data[index + 3] = 255;    // Alpha
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+
+drawInterferencePattern();
+
+    </script>
+</body>
+</html>

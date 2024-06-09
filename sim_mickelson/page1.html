@@ -1,0 +1,541 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+
+    <!-- import module css -->
+    <link href="style/custom_jquery.css" rel="stylesheet">
+
+    <!-- module javascript importé -->
+	<script src="script/jquery1.9.js"></script>
+    <script src="script/jquery-ui-1.10.3.custom.js"></script>
+	<script src="script/View2d.js"></script>
+    <script src="script/affineTrans.js"></script>
+    <script src="script/drawing3d.js"></script>
+    <script src="script/optics2d.js"></script>
+    <script src="script/interference.js"></script>
+    
+     <meta name="author" content="Frédéric Legrand" />
+    <style>
+     body {font:sans; margin-left:5%; margin-right:5%; background:#006b3d}
+     h4 {width:100%; background:#F0F0FF; border:solid 1px; padding:0.5em; text-align:center; font-size:large }
+     h5 {font:bold; font-size:medium; margin:0; padding:3px; text-align:center}
+     #figure1-win { width: 400px; height: 400px; padding: 0.5em; margin:0; float:left}
+     #figure2-win { width: 400px; height: 400px; padding: 0.5em; margin:0; float:right}
+     div.controls {width:50%;}
+     div.control {margin:15px; padding:0.5em; background:#F0F0FF; border:solid 1px}
+     #controls1 {float :left}
+     #controls2 {float:right}
+     #lphoto{
+        
+     }
+     .maa{
+        width: 390px;
+        height: 540px;
+     }
+    </style>
+    <title>Michelson</title>
+</head>
+<body>
+
+</body>
+<h4>Interféromètre de Michelson</h4>
+
+    
+    <div id="figure1-win" class="ui-widget-content">
+            <canvas id="figure1"/>
+            
+    </div>
+    <div id="figure2-win" class="ui-widget-content">
+        <canvas id="figure2"/>
+    </div>
+    
+    <div class="controls" id="controls1">
+    <div class="control">
+            <label for="label-zmax">&Eacute;chelle</label>
+            <input type="text" id="label-zmax"/>
+            <div id="slider-zmax"></div>
+    </div>
+    <div class="control">
+        <h5>Miroir M1</h5>
+        <label for="label-xm1">Translation</label>
+        <input type="text" id="label-xm1"/>
+        <div id="slider-xm1"></div>
+        <label for="label-am1">Inclinaison</label>
+        <input type="text" id="label-am1"/>
+        <div id="slider-am1"></div>
+    </div>
+    <div class="control">
+        <h5>Miroir M2</h5>
+        <label for="label-am2">Inclinaison</label>
+        <input type="text" id="label-am2"/>
+        <div id="slider-am2"></div>
+    </div>
+    </div>
+
+    <div class="controls" id="controls2">
+    
+    <div class="control">
+        <h5>Source</h5>
+        <label for="label-xS">x</label>
+        <input type="text" id="label-xS"/>
+        <div id="slider-xS"></div>
+        <label for="label-yS">y</label>
+        <input type="text" id="label-yS"/>
+        <div id="slider-yS"></div>
+        <label for="label-extentS">Taille</label>
+        <input type="text" id="label-extentS"></input>
+        <div id="slider-extentS"></div>
+    </div>
+    <div class="control">
+        <h5>Plan image</h5>
+        <label for="variable">Variable</label>
+        <input type="radio" name="planimage" id="mvar" checked/></br>
+        <label for="infini">Infini</label>
+        <input type="radio" name="planimage" id="infini"/></br>
+        <label for="planm2">Plan M2</label>
+        <input type="radio" name="planimage" id="planm2"/></br>
+        <label for="label-xM">x</label>
+        <input type="text" id="label-xM"/>
+        <div id="slider-xM"></div>
+        <label for="label-yM">y</label>
+        <input type="text" id="label-yM"/>
+        <div id="slider-yM"></div>
+        
+    </div>
+    </div>
+    <div  id="lphoto">
+        <img src="../asserts/img/images/loke1.jpg" alt="loke" class="maa">
+        <img src="../asserts/img/images/loke3.jpg" alt="loke" class="maa">
+    </div>
+</body>
+<script>
+width1= 400
+height1 = 400
+width2 = 400
+height2 = 400
+context2d1 = false
+zmax = 4
+xm1 = 0.3
+am1 = 0.0
+ym2 = 1
+am2 = 0.0
+font = "10px sans-serif"
+pointSize = 3
+source = new Optic2d.Point(pointSize,"S",font,"black")
+source.matrix.translate(-1,0)
+miroirM1 = new Optic2d.Miror(0.5,"M1",font,"red")
+miroirM1.matrix.translate(1.0+xm1,0)
+miroirM1.matrix.rotate(90+am1)
+miroirM2 = new Optic2d.Miror(0.5,"M2",font,"blue")
+miroirM2.matrix.translate(0,ym2)
+miroirM1.matrix.rotate(am2)
+separatrice = new Optic2d.Miror(1.0,"L",font,"black")
+separatrice.matrix.rotate(45)
+image1 = new Optic2d.Point(pointSize,"S1",font,"red")
+image2 = new Optic2d.Point(pointSize,"S2",font,"blue")
+
+S = [-1,0]
+
+xM = 0.3;
+yM = -1.5;
+ecran = new Optic2d.Miror(1.0,"E",font,"black")
+ecran.matrix.translate(0,yM)
+pointM = new Optic2d.Point(pointSize,"M",font,"black")
+pointM.matrix.translate(xM,yM)
+ray1 = new Optic2d.Ray([xM,yM],[0,1],"red")
+ray10 = new Optic2d.Ray([xM,yM],[0,1],"red")
+ray11 = new Optic2d.Ray([xM,yM],[0,1],"red")
+ray12 = new Optic2d.Ray([xM,yM],[0,1],"red")
+ray2 = new Optic2d.Ray([xM,yM],[0,1],"blue")
+ray20 = new Optic2d.Ray([xM,yM],[0,1],"blue")
+ray21 = new Optic2d.Ray([xM,yM],[0,1],"blue")
+ray22 = new Optic2d.Ray([xM,yM],[0,1],"blue")
+S1 = [0,0]
+S2 = [0,0]
+extentS = 0.0
+nextent = 5
+
+obsInfini = false
+planm2 = false
+focale = 5.0;
+fl = 2.0;
+lentille = new Optic2d.Lens(1.0,"","F'",font,"black",0.1,fl)
+yLentille = -2.0
+lentille.matrix.translate(0,yLentille)
+lentille.matrix.rotate(180)
+lentille.visible = obsInfini
+
+
+drawFigure2 = function(width,height) {
+       canvas = document.getElementById("figure2");
+       var s = Math.min(width,height);
+       canvas.setAttribute("width",s);
+       canvas.setAttribute("height",s);
+       width2=height2=s
+       figure2renderer = new Interferences.CanvasRenderer(canvas);
+       interferences2sources = new Interferences.DeuxSourcesShaderProgram(figure2renderer.gl);
+       interferencesListe2sources = new Interferences.ListeDeuxSourcesShaderProgram(figure2renderer.gl,nextent)
+       calculerFigure2();
+}
+
+calculerFigure2 = function() {
+       var K = Math.PI*2/1e-3;
+       var size = [width2,height2]
+       if (extentS==0) {
+           interferences2sources.setArg([1,0.0,0.0,1.0],[S1[0],0,S1[1]-yM],[S2[0],0,S2[1]-yM],K,[width2/2,height2/2],size,obsInfini,focale)
+           interferences2sources.draw()
+       }
+       else {
+           var liste = calculerImagesMultiples(S,nextent,extentS);
+           interferencesListe2sources.setArg([1,0.0,0.0,1.0],liste,K,[width2/2,height2/2],size,extentS,obsInfini,focale);
+           interferencesListe2sources.draw();
+       }
+}
+
+calculerImagesMultiples = function(s,ne,extent) {
+    images = [];
+    var n = ne*2+1;
+    var dy = extent/(n-1);
+    var source,s1,s2;
+    var i,j;
+    for (j=-ne; j<=ne; j++) {
+        source = [S[0],S[1]+j*dy];
+        s1 = separatrice.image(miroirM1.image(source));
+        s2 = miroirM2.image(separatrice.image(source))
+        images.push([[s1[0],0,s1[1]-yM],[s2[0],0,s2[1]-yM]]);
+    }
+    return images;
+}
+
+calculerFigure1 = function() {
+       miroirM1.matrix.unity()
+       miroirM1.matrix.translate(1.0+xm1,0)
+       miroirM1.matrix.rotate(90+am1)
+       miroirM2.matrix.unity()
+       miroirM2.matrix.translate(0,ym2)
+       miroirM2.matrix.rotate(am2)
+       source.matrix.unity()
+       source.matrix.translate(S[0],S[1])
+       S1p = miroirM1.image(S)
+       S1 = separatrice.image(S1p)
+       S2p = separatrice.image(S)
+       S2 = miroirM2.image(S2p)
+      
+       image1.matrix.unity()
+       image1.matrix.translate(S1[0],S1[1])
+       image2.matrix.unity()
+       image2.matrix.translate(S2[0],S2[1])
+       ecran.matrix.unity()
+       ecran.matrix.translate(0,yM)
+       pointM.matrix.unity()
+       pointM.matrix.translate(xM,yM)
+       
+       ray1.setPoint([xM,yM])
+       ray2.setPoint([xM,yM])
+       if (obsInfini) {
+           ray10.setPoint([xM,yM])
+           ray20.setPoint([xM,yM])
+           var U = [xM,-fl];
+           var t1 = (-yLentille+S1[1])/fl;
+           var I1 = [S1[0]+t1*U[0],S1[1]+t1*U[1]];
+           var t2 = (-yLentille+S2[1])/fl;
+           var I2 = [S2[0]+t2*U[0],S2[1]+t2*U[1]];
+           ray10.setDirection([I1[0]-xM,I1[1]-yM])
+           ray20.setDirection([I2[0]-xM,I2[1]-yM])
+           lentille.refract(ray10,ray1,-1);
+           lentille.refract(ray20,ray2,-1);
+           ray10.visible = ray20.visible = true;
+       }
+       else {
+           ray10.visible = ray20.visible = false;
+           ray1.setDirection([S1[0]-xM,S1[1]-yM])
+           ray2.setDirection([S2[0]-xM,S2[1]-yM])
+       }
+       separatrice.reflect(ray1,ray11)
+       miroirM1.reflect(ray11,ray12)
+       var lx = ray12.P[0]-S[0];
+       var ly = ray12.P[1]-S[1];
+       var l = Math.sqrt(lx*lx+ly*ly)
+       ray12.t = l
+       miroirM2.reflect(ray2,ray21)
+       separatrice.reflect(ray21,ray22)
+       var lx = ray22.P[0]-S[0];
+       var ly = ray22.P[1]-S[1];
+       var l = Math.sqrt(lx*lx+ly*ly)
+       ray22.t = l
+       context2d1.render()
+       
+}
+
+drawFigure1 = function(width,height) {
+      canvas = document.getElementById("figure1");
+       var s = Math.min(width,height);
+       canvas.setAttribute("width",s);
+       canvas.setAttribute("height",s);
+       if (!context2d1) context2d1 = new View2d.Context2d(canvas,"white",true);
+       else context2d1.init();
+       context2d1.viewbox(4,4);
+       context2d1.modelview.translate(2,2);
+       var w = 4.0*0.9;
+       var h = w;
+       plot = new View2d.Plot(-zmax,zmax,-zmax,zmax,-w/2,-h/2,w,h,"white","white");
+       //var xaxis = new View2d.xAxis(-zmax,zmax,0,1,2,font,"black","black");
+       //var yaxis = new View2d.yAxis(-zmax,zmax,0,1,2,font,"black","black");
+       var xaxis = new View2d.Polyline([[-zmax,0],[zmax,0]],"black",0)
+       var yaxis = new View2d.Polyline([[0,-zmax],[0,zmax]],"black",0)
+       plot.addObject([xaxis,yaxis,source,miroirM1,miroirM2,separatrice,ecran,image1,image2,pointM,ray1,ray11,ray12,ray2,ray21,ray22,ray10,ray20,lentille]);
+       context2d1.addObject([plot]);
+       context2d1.render();
+}
+
+updateFigure1 = function() {
+    calculerFigure1()
+    drawFigure1(width1,height1)
+}
+
+$(function(){
+
+
+$("#figure1-win").resizable({
+        create:function(event,ui) {
+            
+            drawFigure1(width1,height1);
+            calculerFigure1();
+            drawFigure2(width2,height2)
+        },
+        resize:function(event,ui) {
+            width1 = ui.size.width;
+            height1 = ui.size.height;
+            drawFigure1(width1,height1);   
+        },
+        minWidth:300,
+        minHeight:300,
+});
+$("#figure2-win").resizable({
+        create:function(event,ui) {
+            
+            
+            
+        },
+        resize:function(event,ui) {
+            width2 = ui.size.width;
+            height2 = ui.size.height;
+            drawFigure2(width2,height2)  
+        },
+        minWidth:300,
+        minHeight:300,
+});
+
+$("#slider-zmax").slider({
+        range:"min",
+        value:zmax,
+        min:1,
+        max:10,
+        step:0.1,
+        slide:function(event,ui) {
+            $("#label-zmax").val(ui.value)
+            zmax = ui.value
+            updateFigure1()
+        }
+});
+$("#label-zmax").val($("#slider-zmax").slider("value"))
+$("#label-zmax").bind("change",function(event) {
+    zmax = parseFloat($(this).val())
+    $("#slider-zmax").slider("value",zmax)
+    updateFigure1()
+});
+$("#slider-xm1").slider({
+        range:"min",
+        value:xm1,
+        min:-0.5,
+        max:3,
+        step:0.0001,
+        slide:function(event,ui) {
+            $("#label-xm1").val(ui.value)
+            xm1 = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-xm1").val($("#slider-xm1").slider("value"))
+$("#label-xm1").bind("change",function(event) {
+    xm1 = parseFloat($(this).val())
+    $("#slider-xm1").slider("value",xm1)
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-am1").slider({
+        range:"min",
+        value:am1,
+        min:0.0,
+        max:5,
+        step:0.01,
+        slide:function(event,ui) {
+            $("#label-am1").val(ui.value)
+            am1 = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-am1").val($("#slider-am1").slider("value"))
+$("#label-am1").bind("change",function(event) {
+    am1 = parseFloat($(this).val())
+    $("#slider-am1").slider("value",am1)
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-am2").slider({
+        range:"min",
+        value:am2,
+        min:0.0,
+        max:1,
+        step:0.01,
+        slide:function(event,ui) {
+            $("#label-am2").val(ui.value)
+            am2 = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-am2").val($("#slider-am2").slider("value"))
+$("#label-am2").bind("change",function(event) {
+    am2 = parseFloat($(this).val())
+    $("#slider-am2").slider("value",am2)
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-xM").slider({
+        range:"min",
+        value:xM,
+        min:0,
+        max:1.0,
+        step:0.01,
+        slide:function(event,ui) {
+            $("#label-xM").val(ui.value)
+            xM = ui.value
+            calculerFigure1()
+        }
+});
+$("#label-xM").val($("#slider-xM").slider("value"))
+$("#label-xM").bind("change",function(event) {
+    xM = parseFloat($(this).val())
+    $("#slider-xM").slider("value",xM)
+    calculerFigure1()
+});
+$("#slider-yM").slider({
+        range:"min",
+        value:yM,
+        min:-5,
+        max:1,
+        step:0.01,
+        slide:function(event,ui) {
+            if (planm2||obsInfini) return;
+            $("#label-yM").val(ui.value)
+            yM = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-yM").val($("#slider-yM").slider("value"))
+$("#label-yM").bind("change",function(event) {
+    if (planm2||obsInfini) return;
+    yM = parseFloat($(this).val())
+    $("#slider-yM").slider("value",yM)
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-xS").slider({
+        range:"min",
+        value:S[0],
+        min:-10,
+        max:-1,
+        step:0.01,
+        slide:function(event,ui) {
+            $("#label-xS").val(ui.value)
+            S[0] = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-xS").val($("#slider-xS").slider("value"))
+$("#label-xS").bind("change",function(event) {
+        S[0] = parseFloat($(this).val())
+        $("#slider-xS").slider("value",S[0])
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-yS").slider({
+        range:"min",
+        value:S[1],
+        min:-0.5,
+        max:0.5,
+        step:0.01,
+        slide:function(event,ui) {
+            $("#label-yS").val(ui.value)
+            S[1] = ui.value
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#label-yS").val($("#slider-yS").slider("value"))
+$("#label-yS").bind("change",function(event) {
+        S[1] = parseFloat($(this).val())
+        $("#slider-yS").slider("value",S[1])
+    calculerFigure1()
+    calculerFigure2()
+});
+$("#slider-extentS").slider({
+        range:"min",
+        value:extentS,
+        min:0.0,
+        max:0.2,
+        step:0.001,
+        slide:function(event,ui) {
+            $("#label-extentS").val(ui.value)
+            extentS = ui.value
+            calculerFigure2()
+        }
+});
+$("#label-extentS").val($("#slider-extentS").slider("value"))
+$("#label-extentS").bind("change",function(event) {
+    extentS = parseFloat($(this).val())
+    $("#slider-extentS").slider("value",extentS)
+    calculerFigure2()
+});
+$("#infini").bind("change",function(event) {
+        if ($(this).is(":checked")) {
+            obsInfini = true
+            planm2 = false;
+            lentille.visible = obsInfini
+            yM = yLentille-fl
+            $("#slider-yM").slider("value",yM)
+            $("#label-yM").val(yM)
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+$("#planm2").bind("change",function(event) {
+        if ($(this).is(":checked")) {
+            planm2 = true
+            lentille.visible  = obsInfini = false
+            yM = ym2;
+            $("#slider-yM").slider("value",yM)
+            $("#label-yM").val(yM)
+            calculerFigure1()
+            calculerFigure2()
+        }
+        
+});
+$("#mvar").bind("change",function(event) {
+        if ($(this).is(":checked")) {
+            planm2 = false;
+            lentille.visible  = obsInfini = false
+            calculerFigure1()
+            calculerFigure2()
+        }
+});
+})
+</script>
+</html>
